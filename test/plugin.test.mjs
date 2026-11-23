@@ -544,3 +544,19 @@ test("recovery rebuilds the thread list from durable tab records", () => {
 	assert.equal(mod.__test.recoverThreads("parent-r"), 0);
 });
 
+
+test("clearing side chats removes every key this plugin owns", () => {
+	globalThis.localStorage = fakeStorage();
+	globalThis.localStorage.setItem("dsh.sidechat.v1.threads.p", JSON.stringify([{ childId: "c1" }]));
+	globalThis.localStorage.setItem("dsh.sidechat.v1.p:tab", JSON.stringify({ childId: "c1" }));
+	globalThis.localStorage.setItem("dsh.sidechat.v1.hidden", JSON.stringify(["c1"]));
+	globalThis.localStorage.setItem("unrelated.key", "keep");
+	const removed = mod.__test.clearAllSideChatData();
+	assert.equal(removed, 3);
+	assert.equal(globalThis.localStorage.getItem("dsh.sidechat.v1.threads.p"), null);
+	assert.equal(globalThis.localStorage.getItem("dsh.sidechat.v1.p:tab"), null);
+	assert.equal(globalThis.localStorage.getItem("dsh.sidechat.v1.hidden"), null);
+	assert.equal(globalThis.localStorage.getItem("unrelated.key"), "keep");
+	assert.deepEqual(mod.__test.readThreadList("p"), []);
+});
+
