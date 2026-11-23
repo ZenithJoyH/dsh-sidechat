@@ -1,0 +1,6 @@
+# dsh-sidechat bundle patch.
+# Installed by `dsh plugin --profile <name> add dsh-sidechat`; the row mounts
+# the package resolved from the profile's node_modules.
+- insert:
+    - id: side-chat
+      name: 'dsh-sidechat'

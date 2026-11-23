@@ -1,0 +1,48 @@
+{
+  "name": "dsh-sidechat",
+  "version": "0.1.0",
+  "description": "Codex-style side chat for DeepSeek Harness: fork the current conversation into an independent right-side thread, ask there without interrupting the main line, and bring answers back.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-ui-conversation",
+        "@deepseek-ai/dsh-client-ui-sidebar-right"
+      ]
+    }
+  },
+  "keywords": [
+    "dsh",
+    "deepseek",
+    "plugin",
+    "side-chat",
+    "sidechat",
+    "fork"
+  ],
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test test/*.mjs"
+  }
+}
