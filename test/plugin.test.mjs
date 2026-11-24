@@ -560,3 +560,19 @@ test("clearing side chats removes every key this plugin owns", () => {
 	assert.deepEqual(mod.__test.readThreadList("p"), []);
 });
 
+
+test("a running side thread surfaces in the sidebar, an idle one stays hidden", () => {
+	globalThis.localStorage = fakeStorage();
+	mod.__test.resetVisibility();
+	const list = {
+		ids: ["main", "child"],
+		byId: { main: { id: "main" }, child: { id: "child", running: true } }
+	};
+	mod.__test.hideSession("child");
+	assert.deepEqual(mod.__test.visibleSessionList(list, mod.__test.visibilitySnapshot()).ids, ["main", "child"]);
+	// Turn finished: back out of the list.
+	const idle = { ids: ["main", "child"], byId: { main: { id: "main" }, child: { id: "child", running: false } } };
+	assert.deepEqual(mod.__test.visibleSessionList(idle, mod.__test.visibilitySnapshot()).ids, ["main"]);
+	mod.__test.resetVisibility();
+});
+
