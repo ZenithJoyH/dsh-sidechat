@@ -576,3 +576,12 @@ test("a running side thread surfaces in the sidebar, an idle one stays hidden", 
 	mod.__test.resetVisibility();
 });
 
+
+test("the fork cut is readable from every conversation snapshot shape", () => {
+	assert.equal(mod.__test.lastSeqOf({ nodes: [{ seq: 3 }, { seq: 9 }] }), 9);
+	assert.equal(mod.__test.lastSeqOf({ chat: { nodes: new Map([["a", { data: { finalNode: { seq: 21 } } }], ["b", { seq: 18 }]]) } }), 21);
+	assert.equal(mod.__test.lastSeqOf({ turnEnds: new Map([[1, 12], [2, 34]]) }), 34);
+	assert.equal(mod.__test.lastSeqOf({ nodes: [{ seq: 4 }], turnEnds: new Map([[1, 30]]) }), 30);
+	assert.equal(mod.__test.lastSeqOf(null), 0);
+});
+
