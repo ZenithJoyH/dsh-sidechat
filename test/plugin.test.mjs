@@ -14,6 +14,7 @@ const reactStub = {
 	useMemo: (fn) => fn(),
 	useSyncExternalStore: (_subscribe, getSnapshot) => getSnapshot(),
 	createContext: (value) => ({ value }),
+	Component: class { constructor(props) { this.props = props; this.state = {}; } },
 	useContext: () => null
 };
 

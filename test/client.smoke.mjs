@@ -19,6 +19,7 @@ const fakeReact = {
 	useCallback: (fn) => fn,
 	useSyncExternalStore: () => undefined,
 	createContext: (value) => ({ value }),
+	Component: class { constructor(props) { this.props = props; this.state = {}; } },
 	useContext: () => null
 };
 const mod = captured.factory((name) => {
