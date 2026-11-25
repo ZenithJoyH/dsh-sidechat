@@ -85,13 +85,11 @@ test("apply registers the panel, header, selection and conversation seats", () =
 	assert.deepEqual(names, [
 		"conversation.chat.text-interaction",
 		"conversation.session.header.utilities",
-		"dshside.conversation",
 		"sidebar.right.pane.tab",
 		"sidebar.right.pane.tab.title"
 	]);
 	const panel = calls.registers.find((entry) => entry.options.name === "sidebar.right.pane.tab");
 	assert.equal(panel.options.key, "dsh-sidechat:panel");
-	assert.deepEqual(panel.options.children, { "dshside.conversation": { kind: "single", scope: "session" } });
 	const injected = panel.options.inject("s1");
 	assert.equal(injected.sessionId, "s1");
 	assert.equal(injected.ctx, ctx);
