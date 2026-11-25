@@ -585,3 +585,22 @@ test("the fork cut is readable from every conversation snapshot shape", () => {
 	assert.equal(mod.__test.lastSeqOf(null), 0);
 });
 
+
+test("the cut is read from the untouched fork child", async () => {
+	let reads = 0;
+	const ctx = {
+		sessions: {
+			binding: () => {
+				reads += 1;
+				// The binding appears only on the second poll.
+				return reads < 2 ? undefined : { session: { getSnapshot: () => ({ turnEnds: new Map([[1, 41]]) }) } };
+			}
+		}
+	};
+	assert.equal(await mod.__test.forkCutOf(ctx, "child", 5), 41);
+	assert.ok(reads >= 2);
+	// Unreadable children report 0 so the caller can fall back safely.
+	const empty = { sessions: { binding: () => undefined } };
+	assert.equal(await mod.__test.forkCutOf(empty, "child", 2), 0);
+});
+
