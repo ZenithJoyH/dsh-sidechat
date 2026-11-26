@@ -631,3 +631,25 @@ test("the inherited count is derived from the fork marker", () => {
 	assert.equal(mod.__test.inheritedCountOf({ nodes: [] }, 9), null);
 });
 
+
+test("diagnostics report the numbers that decide the transcript", () => {
+	const snapshot = { nodes: [{ seq: 1 }, { seq: 2 }, { seq: 3 }, { seq: 4 }], running: true };
+	const info = mod.__test.diagnosticsOf({
+		snapshot,
+		cut: 2,
+		inheritedCount: 2,
+		boundarySource: "fork-count",
+		childId: "abcdef123456"
+	});
+	assert.equal(info.summary, "诊断 · 继承 2 · 显示 2/4");
+	assert.match(info.detail, /child=abcdef12/);
+	assert.match(info.detail, /source=fork-count/);
+	assert.match(info.detail, /rows=2\/4/);
+	assert.match(info.detail, /running=true/);
+	// Unknown inputs stay explicit instead of reading as zero.
+	const unknown = mod.__test.diagnosticsOf({ snapshot: null, cut: null, inheritedCount: null, boundarySource: "", childId: "" });
+	assert.equal(unknown.summary, "诊断 · 继承 ? · 显示 0/0");
+	assert.match(unknown.detail, /source=-/);
+	assert.match(unknown.detail, /boundary=null/);
+});
+
