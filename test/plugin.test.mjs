@@ -615,9 +615,19 @@ test("rows are sliced by inherited count, independent of seq numbering", () => {
 	const nodes = [{ seq: 401, kind: "user" }, { seq: 402, kind: "assistant" }, { seq: 1, kind: "user" }, { seq: 2, kind: "assistant" }];
 	// A fork that renumbers its own events: only the count rule is correct.
 	assert.deepEqual(mod.__test.sideRows({ nodes }, 500, 2).map((n) => n.seq), [1, 2]);
-	// Without a count the seq cut applies.
-	assert.deepEqual(mod.__test.sideRows({ nodes }, 401, null).map((n) => n.seq), [402]);
+	// Without a count every stored row is shown: a seq cut cannot be trusted to
+	// separate inherited rows from the thread's own ones.
+	assert.deepEqual(mod.__test.sideRows({ nodes }, 401, null).map((n) => n.seq), [401, 402, 1, 2]);
 	// With neither, everything is shown.
 	assert.equal(mod.__test.sideRows({ nodes }, null, null).length, 4);
+});
+
+
+test("the inherited count is derived from the fork marker", () => {
+	const snapshot = { nodes: [{ seq: 5 }, { seq: 9 }, { seq: 40 }, { seq: 41 }] };
+	assert.equal(mod.__test.inheritedCountOf(snapshot, 9), 2);
+	assert.equal(mod.__test.inheritedCountOf(snapshot, 0), 0);
+	assert.equal(mod.__test.inheritedCountOf(snapshot, null), null);
+	assert.equal(mod.__test.inheritedCountOf({ nodes: [] }, 9), null);
 });
 
