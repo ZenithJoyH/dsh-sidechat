@@ -689,3 +689,20 @@ test("tool calls and failures surface as their own rows", () => {
 	assert.equal(rows.length, 3);
 });
 
+
+test("the event snapshot is identity-stable between log changes", () => {
+	const entries = [{ event: { type: "user/message", data: { content: [] } } }];
+	const window = { entries };
+	const session = { eventSource: { getSnapshot: () => window } };
+	const first = mod.__test.stableSessionEvents(session);
+	const second = mod.__test.stableSessionEvents(session);
+	assert.equal(first, second, "same window must yield the same array (React error #185 guard)");
+	// A new window (the log changed) yields a new array.
+	const next = { entries: [...entries, { event: { type: "turn/end", data: {} } }] };
+	const session2 = { eventSource: { getSnapshot: () => next } };
+	const third = mod.__test.stableSessionEvents(session2);
+	assert.notEqual(first, third);
+	assert.equal(third.length, 2);
+	assert.equal(mod.__test.stableSessionEvents(null).length, 0);
+});
+
