@@ -653,3 +653,39 @@ test("diagnostics report the numbers that decide the transcript", () => {
 	assert.match(unknown.detail, /boundary=null/);
 });
 
+
+test("the durable event log renders messages and cuts at the inherited marker", () => {
+	const events = [
+		{ type: "user/message", data: { content: [{ type: "text", text: "parent question" }] } },
+		{ type: "assistant/message", data: { message: { content: [{ type: "text", text: "parent answer" }] } } },
+		{ type: "session/end-seed", data: { inherited: true } },
+		{ type: "user/message", data: { content: [{ type: "text", text: "side question" }] } },
+		{ type: "assistant/message", data: { message: { content: [{ type: "text", text: "side answer" }] } } },
+		{ type: "turn/end", data: { reason: { kind: "completed" } } }
+	];
+	assert.equal(mod.__test.inheritedMarkerIndex(events), 2);
+	const transcript = mod.__test.eventTranscript(events, 0);
+	assert.equal(transcript.source, "events-marker");
+	assert.deepEqual(transcript.rows.map((row) => row.text), ["side question", "side answer"]);
+	// No marker: the fallback index is applied.
+	const partial = mod.__test.eventTranscript([{ type: "user/message", data: { content: [{ type: "text", text: "x" }] } }], 1);
+	assert.deepEqual(partial.rows, []);
+	assert.equal(partial.source, "events-index");
+});
+
+test("tool calls and failures surface as their own rows", () => {
+	const events = [
+		{ type: "assistant/message", data: { message: { content: [
+			{ type: "text", text: "running it" },
+			{ type: "tool-call", name: "bash", arguments: "{\"cmd\":\"ls\"}" }
+		] } } },
+		{ type: "tool/result", data: { isError: true } },
+		{ type: "turn/end", data: { reason: { kind: "error" } } }
+	];
+	const rows = mod.__test.rowsFromEvents(events, 0);
+	assert.equal(rows[0].kind, "assistant");
+	assert.equal(rows[0].tools[0].name, "bash");
+	assert.equal(rows[1].kind, "failure");
+	assert.equal(rows.length, 3);
+});
+

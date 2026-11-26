@@ -7,6 +7,7 @@ Codex 风格的 DSH 侧边聊天：从当前主会话分叉出一条独立支线
 ## 功能
 
 - **侧聊属于当前主对话**：侧聊是主会话的 `sessions.fork` 分支——共享主对话已经完成的历史上下文，主对话后续新增的内容不会混进来；线程记录里保留父会话 id，界面上只显示这条侧聊自己新增的问答。
+- **对话数据来自持久事件日志**：`session.eventSource`（`user/message`、`assistant/message`、`tool/result`、`turn/end`…）是宿主的持久日志，不依赖 `snapshot.nodes` 之类的投影形状；继承切点直接用日志里的 `session/end-seed · inherited:true` 标记定位，所以既能渲染消息、又天然免疫 fork 重编号。投影仅作为兜底。
 - **自渲染对话，不依赖宿主内部**：面板不再借用宿主的 Chat 视图，而是从子会话快照里筛出 `seq > 分叉切点` 的节点自己渲染（用户气泡、助手 Markdown/代码块、思考折叠、工具调用摘要、上下文行、失败行、流式片段）。正确性只取决于数据，不取决于宿主渲染器何时注册、槽条目能否替换。
 - **切点取在 fork 完成瞬间**：fork 刚返回时子会话日志恰好就是继承前缀，此刻读取它的最新 seq 作为切点并落盘；父会话快照可读时优先用父会话的最后 seq。都读不到时退回「本次挂载时的水位」，只显示挂载之后的内容，并显式提示切点未知。
 - **诊断行**：面板顶部有一条 11px 的「诊断 · 继承 N · 显示 M/T」，点开显示完整字段：`child`、`boundary`、`source`（fork-count / record / marker-count / fresh / none）、`inheritedCount`、`rows`、`running`、`hasMore`、`phase`。截图这一行就能定位切点来源与显示条数。
