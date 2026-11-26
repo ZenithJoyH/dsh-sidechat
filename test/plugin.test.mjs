@@ -591,15 +591,33 @@ test("the cut is read from the untouched fork child", async () => {
 		sessions: {
 			binding: () => {
 				reads += 1;
-				// The binding appears only on the second poll.
-				return reads < 2 ? undefined : { session: { getSnapshot: () => ({ turnEnds: new Map([[1, 41]]) }) } };
+				// The binding appears only on the second poll; the child already holds
+				// the inherited rows, so both the row count and the seq cut are known.
+				return reads < 2 ? undefined : {
+					session: {
+						getSnapshot: () => ({ nodes: [{ seq: 12 }, { seq: 30 }, { seq: 41 }], turnEnds: new Map([[1, 41]]) })
+					}
+				};
 			}
 		}
 	};
-	assert.equal(await mod.__test.forkCutOf(ctx, "child", 5), 41);
+	const prefix = await mod.__test.forkPrefixOf(ctx, "child", 5);
+	assert.equal(prefix.cut, 41);
+	assert.equal(prefix.count, 3);
 	assert.ok(reads >= 2);
 	// Unreadable children report 0 so the caller can fall back safely.
 	const empty = { sessions: { binding: () => undefined } };
 	assert.equal(await mod.__test.forkCutOf(empty, "child", 2), 0);
+});
+
+
+test("rows are sliced by inherited count, independent of seq numbering", () => {
+	const nodes = [{ seq: 401, kind: "user" }, { seq: 402, kind: "assistant" }, { seq: 1, kind: "user" }, { seq: 2, kind: "assistant" }];
+	// A fork that renumbers its own events: only the count rule is correct.
+	assert.deepEqual(mod.__test.sideRows({ nodes }, 500, 2).map((n) => n.seq), [1, 2]);
+	// Without a count the seq cut applies.
+	assert.deepEqual(mod.__test.sideRows({ nodes }, 401, null).map((n) => n.seq), [402]);
+	// With neither, everything is shown.
+	assert.equal(mod.__test.sideRows({ nodes }, null, null).length, 4);
 });
 
