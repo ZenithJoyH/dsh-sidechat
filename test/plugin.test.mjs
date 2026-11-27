@@ -698,3 +698,43 @@ test("the event snapshot is identity-stable between log changes", () => {
 	assert.equal(mod.__test.stableSessionEvents(null).length, 0);
 });
 
+
+test("the model face is probed by shape, not by one hard-coded name", async () => {
+	const plain = {
+		modelCatalog: async () => ({ ok: true, value: { groups: [{ id: "baai", name: "Baai", models: [{ id: "m1", name: "M1" }] }] } }),
+		selectModel: async () => ({ ok: true })
+	};
+	const { ctx } = fakeContext();
+	const get = ctx.get;
+	ctx.get = (name) => (name === "remote.session" ? plain : get(name));
+	assert.equal(mod.__test.modelFace(ctx), plain);
+	assert.deepEqual(await mod.__test.loadModelCatalog(ctx), [{ id: "baai", name: "Baai", models: [{ id: "m1", name: "M1" }] }]);
+	assert.deepEqual(await mod.__test.loadModelCatalog(fakeContext().ctx), []);
+});
+
+test("switching the side model reports host acceptance", async () => {
+	const calls = [];
+	const { ctx } = fakeContext();
+	const get = ctx.get;
+	ctx.get = (name) => (name === "remote" ? { session: {
+		modelCatalog: async () => ({ ok: true, value: { groups: [] } }),
+		selectModel: async (request) => { calls.push(request); return { ok: true }; }
+	} } : get(name));
+	assert.equal(await mod.__test.selectSideModel(ctx, "child", "baai", "m1"), true);
+	assert.deepEqual(calls, [{ sessionId: "child", provider: "baai", model: "m1" }]);
+});
+
+test("permission presets come from the host catalog", async () => {
+	const { ctx } = fakeContext();
+	const get = ctx.get;
+	ctx.get = (name) => (name === "permissionPresets" ? {
+		catalog: async () => ({ ok: true, value: { options: [
+			{ value: "auto", name: "Auto" },
+			{ value: "full", name: "Full access", description: "no prompts" }
+		] } })
+	} : get(name));
+	const options = await mod.__test.loadPermissionCatalog(ctx);
+	assert.deepEqual(options.map((option) => option.value), ["auto", "full"]);
+	assert.equal(options[1].description, "no prompts");
+});
+
