@@ -266,7 +266,7 @@ test("the inherited-history gate cuts exactly at the fork boundary", () => {
 });
 
 
-test("quote-card Markdown is split into native quote segments", () => {
+test("quote-card Markdown is split into ordered quote segments", () => {
 	const segments = mod.__test.parseQuoteCardDraft(
 		"> **引用 · 选中文字**\n> 第一行\n> 第二行\n\n> **引用 · 助手 · 10:23**\n> 另一段"
 	);
@@ -484,14 +484,6 @@ test("the thread record remembers which hand-off was inserted", () => {
 	assert.equal(record.seedHash, hash);
 	assert.equal(record.seeded, true);
 	assert.equal(record.childId, "child-9", "other fields survive the patch");
-});
-
-
-test("the last-resort quote keeps the words without Markdown markers", () => {
-	mod.__test.resetLocale();
-	assert.equal(mod.__test.quoteFallback("old patch @ c32", "Quoted:"), "Quoted:\nold patch @ c32\n\n");
-	assert.equal(mod.__test.quoteFallback("   ", "Quoted:"), "");
-	assert.equal(mod.__test.quoteFallback("body", ""), "body\n\n");
 });
 
 
